@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- Graduação -->
+    <!-- <script
+      id="Microsoft_Omnichannel_LCWidget"
+      src="https://oc-cdn-public-sam.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js"
+      data-app-id="12026c0f-b2c8-4fcb-b1aa-b4c30f413da9"
+      data-lcw-version="prod"
+      data-org-id="77bfc202-f0de-4be2-9dda-85c90e3c4049"
+      data-org-url="https://unq77bfc202f0de4be29dda85c90e3c4-crm2.omnichannelengagementhub.com"
+    ></script> -->
+
+    <!-- Pos -->
+    <script
+      v2
+      id="Microsoft_Omnichannel_LCWidget"
+      src="https://oc-cdn-public-sam.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js"
+      data-app-id="c76f0f77-d7c1-4994-b1cb-7ee7def85d85"
+      data-lcw-version="test"
+      data-org-id="77bfc202-f0de-4be2-9dda-85c90e3c4049"
+      data-org-url="https://unq77bfc202f0de4be29dda85c90e3c4-crm2.omnichannelengagementhub.com"
+      data-hide-chat-button=true
+    ></script>
+
+    <script>
+      window.addEventListener("lcw:ready", () => {
+        
+      });
+      window.addEventListener(
+        "lcw:error",
+        function handleLivechatErrorEvent(errorEvent) {
+          // Handle LiveChat error event
+          console.log(errorEvent);
+        }
+      );
+
+      function abrir(){
+        Microsoft.Omnichannel.LiveChatWidget.SDK.setContextProvider(
+          function contextProvider() {
+            return {
+              Email: "jackson.gti@outlook.com",
+            };
+          }
+        );
+        Microsoft.Omnichannel.LiveChatWidget.SDK.startChat();
+        // Retrieves the currently set custom context provider
+        // If there is no registered custom context provider, then it returns null
+        let registeredContextProvider =
+          Microsoft.Omnichannel.LiveChatWidget.SDK.getContextProvider();
+        console.log(registeredContextProvider);
+
+
+      }
+    </script>
+  </head>
+
+  <body>
+    <button onclick="abrir()" >Abrir chat</button>
+    <div id="webchat" role="main"></div>
+  </body>
+</html>
