@@ -1,8 +1,10 @@
+import os
+
 import pandas as pd
 import requests
 
 headers = {
-    'Authorization': 'Bearer aW50ZWdyYWNhby51bnlsZXlhQGFsdW5vZGlnaXRhbC5jb20uYnI6SDQ3S3A5N2Zz'
+    'Authorization': os.getenv("AUTH_ALUNODIGITAL")
 }
 
 payload = {
@@ -13,7 +15,7 @@ payload = {
     'IDDiploma':  'st_iddiploma'
 }
 
-url = "https://unyleya.alunodigital.com.br/API_105/ConsultarDiploma"
+url = f"{os.getenv("URL_ALUNODIGITAL")}/ConsultarDiploma"
 tabela = pd.read_excel('consulta/consulta.xlsx')
 
 

@@ -12,6 +12,7 @@ openpyxl = "*"
 youtube-dl = "*"
 yt-dlp = "*"
 inquirerpy = "*"
+python-dotenv = "*"
 
 [dev-packages]
 

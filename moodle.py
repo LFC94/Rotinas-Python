@@ -1,3 +1,4 @@
+import os
 import time
 
 import pandas as pd
@@ -26,7 +27,7 @@ def roboLimparAlunosG2Moodle():
         with open('retorno/roboLimparAlunos.json', 'a') as arquivo:
             arquivo.write('Nome: ' + id.get('nome'))
         print('Nome:'+id.get('nome'))
-        url = "http://g2s.unyleya/robo/limpar-alunos-g2-moodle?bl_encerrar=1&id_saladeaula=" + \
+        url = f"{os.getenv("URL_G2")}/robo/limpar-alunos-g2-moodle?bl_encerrar=1&id_saladeaula=" + \
             id.get('id')
         response = requests.request("GET", url)
         if validateJSON(response.text):
@@ -45,8 +46,8 @@ def roboRemoveUsuarioSalaMoodle():
         count += 1
         print(f'{count} Sala: {st_saladeaula}')
 
-        url = "https://mdlgra01.unyleya.edu.br/webservice/rest/server.php?"
-        # url += "wstoken=2993b8ffbc091352286b4d6074abaad0"
+        url = f"{os.getenv("URL_MOODLE")}/webservice/rest/server.php?"
+        url += f"wstoken={os.getenv("TOKEN_MOODLE")}"
         # url += "&wsfunction=enrol_manual_enrol_users"
         # url += "&enrolments[0][roleid]=11"
         # url += "&enrolments[0][userid]=54"

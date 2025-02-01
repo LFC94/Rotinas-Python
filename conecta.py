@@ -1,24 +1,16 @@
 
-import pyodbc
+import os
 
-# informações de conexão
-server = '172.30.4.165,8100'
-# database = 'G2_CENSO2023'
-database = 'G2_MAN'
-username = 'lucas.costa'
-password = 'Luc4s301945'
+import pyodbc
 
 
 def init_connection():
     return pyodbc.connect(
-        "DRIVER={SQL Server};SERVER="
-        + server
-        + ";DATABASE="
-        + database
-        + ";UID="
-        + username
-        + ";PWD="
-        + password
+        "DRIVER={SQL Server};"
+        + f"SERVER={os.getenv("SERVER_DB")};"
+        + f"DATABASE={os.getenv("DATABASE")};"
+        + f"UID={os.getenv("USERNAME_DB")};"
+        + f"PWD={os.getenv("PASSWORD_DB")}"
     )
 
 
