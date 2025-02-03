@@ -2,7 +2,7 @@ import os
 
 import yt_dlp as youtube_dl
 
-from uteis import menuTelas
+from src.util.uteis import menuTelas
 
 
 def downloadMP3():

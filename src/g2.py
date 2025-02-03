@@ -5,7 +5,7 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-from uteis import menuTelas
+from src.util.uteis import menuTelas
 
 
 def roboEncerrarAlunosSalaPerene():

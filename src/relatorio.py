@@ -2,7 +2,7 @@
 
 import pandas as pd
 
-from uteis import formatCPF, menuTelas
+from src.util.uteis import formatCPF, menuTelas
 
 
 def inicio():

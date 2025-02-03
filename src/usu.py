@@ -4,7 +4,7 @@ import os
 import pandas as pd
 import requests
 
-from uteis import menuTelas, validateJSON
+from src.util.uteis import menuTelas, validateJSON
 
 
 def montarUrlUsu(IDDiploma, dip=None):

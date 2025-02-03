@@ -4,8 +4,8 @@ import os
 
 import pandas as pd
 
-from conecta import init_connection, run_execute, run_query
-from uteis import menuTelas
+from src.util.conecta import init_connection, run_execute, run_query
+from src.util.uteis import menuTelas
 
 keysNotNullComplemetares = ['st_nomeinstituicao',
                             'id_pessoacomdeficiencia', 'id_etnia', 'id_tipoescola']

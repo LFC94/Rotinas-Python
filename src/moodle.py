@@ -4,8 +4,8 @@ import time
 import pandas as pd
 import requests
 
-from uteis import (extract_between, extract_start, menuTelas, printLoading,
-                   validateJSON)
+from src.util.uteis import (extract_between, extract_start, menuTelas,
+                            printLoading, validateJSON)
 
 
 def inicio():

@@ -1,13 +1,7 @@
-
 from dotenv import load_dotenv
 
-import censo
-import g2
-import moodle
-import relatorio
-import usu
-import youtube
-from uteis import menuTelas
+from src import censo, g2, moodle, relatorio, usu, youtube
+from src.util.uteis import menuTelas
 
 load_dotenv()
 
