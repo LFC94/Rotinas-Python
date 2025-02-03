@@ -43,7 +43,7 @@ Explique como usar o projeto. Inclua exemplos de comandos ou scripts que podem s
    Por exemplo:
 
    ```bash
-   pipenv run python init.py
+   pipenv run python __main__.py
    ```
 
 ## Licença
