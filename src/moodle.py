@@ -5,14 +5,15 @@ import pandas as pd
 import requests
 
 from src.util.uteis import (extract_between, extract_start, menuTelas,
-                            printLoading, validateJSON)
+                            openFile, printLoading, validateJSON)
 
 
 def inicio():
     MENU = {'1': {'title': 'Limpar Moodle', 'function': roboLimparAlunosG2Moodle},
             '2': {'title': 'Remover Usuario Sala', 'function': roboRemoveUsuarioSalaMoodle},
             '3': {'title': 'Regex logMoodle', 'function': gerarlistaRegex},
-            '4': {'title': 'Buscar Nota Moodle', 'function': buscarNotaMoodle}
+            '4': {'title': 'Buscar Nota Moodle', 'function': buscarNotaMoodle},
+            '5': {'title': 'Buscar Grupos Moodle', 'function': buscarGruposSalas}
             }
 
     menuTelas(MENU)
@@ -181,4 +182,37 @@ def buscarNotaMoodle():
             })
         pd.DataFrame(retorno).to_excel("retorno/notamoodle.xlsx", index=False)
         time.sleep(0.100)
+    print("Gerado o arquivo retorno/notamoodle.xlsx")
+
+
+def buscarGruposSalas():
+    file_path, _ = openFile()
+    tabela = pd.read_excel(file_path)
+    retorno = []
+    line_count = tabela['st_codsistemacurso'].count()
+    line_atua = 0
+    porcentagemAnt = 0
+    for index, row in tabela.iterrows():
+        line_atua = line_atua + 1
+        porcentagem = int(line_atua * 100 / line_count)
+        if porcentagem > porcentagemAnt:
+            printLoading(porcentagem, f'{line_atua}/{line_count}')
+            porcentagemAnt = porcentagem
+
+        url = row['st_codsistema']
+        url += f'?moodlewsrestformat=json'
+        url += f'&wsfunction=core_group_get_course_groups'
+        url += f'&courseid={row['st_codsistemacurso']}'
+        url += f'&wstoken={row['st_codchave']}'
+        response = requests.request("POST", url)
+        if validateJSON(response.text):
+            for item in response.json():
+                retorno.append({**row, **item})
+        else:
+            retorno.append({**row, 'erro': response.text})
+
+        print(retorno)
+    pd.DataFrame(retorno).to_excel(
+        "retorno/BuscarGrupos.xlsx", index=False)
+    time.sleep(0.100)
     print("Gerado o arquivo retorno/notamoodle.xlsx")

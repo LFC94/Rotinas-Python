@@ -2,12 +2,14 @@
 
 import pandas as pd
 
-from src.util.uteis import formatCPF, menuTelas
+from src.util.uteis import formatCPF, menuTelas, openFile
 
 
 def inicio():
-    menu = {'1': {'title': 'RELATORIO ENADE', 'function': enade},
-            }
+    menu = {
+        '1': {'title': 'RELATORIO ENADE', 'function': enade},
+        '2': {'title': 'RELATORIO Renovação', 'function': mediaRenovaca},
+    }
     menuTelas(menu)
 
 
@@ -77,3 +79,51 @@ def enade():
 
     print("\n Salvando .....")
     pd.DataFrame(json_file.values()).to_excel("retorno/relatorioenade.xlsx")
+
+
+def mediaRenovaca():
+
+    # file_path, _ = openFile()
+    # print(file_path)
+    xls = pd.ExcelFile("C:/Users/dev/Downloads/ofer.xlsx")
+    df = xls.parse('sheet1')  # Ajuste o nome da aba conforme necessário
+
+    # Contar o número de id_venda únicos
+    num_id_venda_unico = df["id_venda"].nunique()
+
+    # Calcular a média de id_venda repetidos
+    total_vendas = df["id_venda"].count()
+    media_id_venda_repetido = total_vendas / num_id_venda_unico
+
+    # Calcular o percentual de "id_prematriculadisciplina" sendo vazio
+    percentual_id_prematricula_vazio = df["id_prematriculadisciplina"].isna(
+    ).mean() * 100
+
+    # Converter a coluna de data para datetime
+    df["dt_confirmacao"] = pd.to_datetime(df["dt_confirmacao"])
+
+    # Criar a coluna de ano/mês
+    df["ano_mes"] = df["dt_confirmacao"].dt.to_period("M")
+
+    # Calcular a média de id_venda única por mês/ano
+    media_id_venda_unica_por_mes = df.groupby(
+        "ano_mes")["id_venda"].nunique().mean()
+
+    # Contar o número de matrículas únicas
+    num_matriculas_unicas = df["id_matricula"].nunique()
+
+    # Identificar o mês com mais vendas únicas
+    mes_mais_vendas = df.groupby("ano_mes")["id_venda"].nunique().idxmax()
+
+    # Exibir os resultados
+    results = {
+        "Numero de id_venda unico": num_id_venda_unico,
+        "Media de id_venda repetido": media_id_venda_repetido,
+        "Percentual de id_prematriculadisciplina Vazio": percentual_id_prematricula_vazio,
+        "Media de id_venda unica por mes/ano": media_id_venda_unica_por_mes,
+        "Numero de matriculas unicas": num_matriculas_unicas,
+        "Mes com mais vendas unicas": str(mes_mais_vendas)
+    }
+
+    for key, item in results.items():
+        print(f"{key}: {item}")
