@@ -1,9 +1,11 @@
 import json
 import os
 import re
+import sys
 
 from InquirerPy import prompt
 from InquirerPy.base.control import Choice
+from PySide6.QtWidgets import QApplication, QFileDialog
 
 
 def validateJSON(jsonData):
@@ -77,3 +79,10 @@ def extract_start(text, end):
         return match.group(1).strip() if match else None
     except BufferError as err:
         return None
+
+
+def openFile():
+    app = QApplication(sys.argv)
+    file_dialog = QFileDialog()
+    return file_dialog.getOpenFileName(
+        None, "Selecione um arquivo", "", "Arquivos de Excel (*.xlsx)")
