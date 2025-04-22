@@ -1,7 +1,7 @@
 
 import datetime
-import os
 
+import numpy
 import pandas as pd
 
 from src.util.conecta import init_connection, run_execute, run_query
@@ -16,10 +16,12 @@ keysNotNullPessoa = ['id_usuario', 'id_entidade',
 
 def inicio():
     MENU = {
-        '1': {'title': 'Atualizar Pessoa dados Complemtar', 'function': atualizarPessoaDadosComplementar},
-        '2': {'title': 'Atualizar Polo Censo', 'function': atualizarPoloCensso},
-        '3': {'title': 'Atualizar Pessoa Censo', 'function': atualizarPessoa},
-        '5': {'title': 'Diferenca Censo Anteriro Atual', 'function': diferencaCensoAnteriorAtua}}
+        '1': {'title': 'Diferenca Censo Anteriro Atual', 'function': diferencaCensoAnteriorAtua},
+        '2': {'title': 'Atualizar Pessoa dados Complemtar', 'function': atualizarPessoaDadosComplementar},
+        '3': {'title': 'Atualizar Polo Censo', 'function': atualizarPoloCenso},
+        '4': {'title': 'Atualizar Pessoa Censo', 'function': atualizarPessoa},
+        '5': {'title': 'Atualizar Forma de Ingresso', 'function': atualizarFormaIngresso}
+    }
 
     menuTelas(MENU)
 
@@ -48,7 +50,7 @@ def atualizarPessoaDadosComplementar():
             for key, valor in row.items():
                 if not compararCampos(valor, busca.get(key)):
                     update.append(
-                        f"{key}={str(formatarDadoBanco(valor, key))}")
+                        f"{key}={str(formatarDadoBanco(valor, key, keysNotNullComplemetares))}")
             if len(update) > 0:
                 sql = f"UPDATE tb_pessoadadoscomplementares SET {
                     ', '.join(update)} WHERE id_usuario = {id_usuario}"
@@ -58,7 +60,8 @@ def atualizarPessoaDadosComplementar():
             valores = []
             for key, valor in row.items():
                 campo.append(key)
-                valores.append(str(formatarDadoBanco(valor, key)))
+                valores.append(str(formatarDadoBanco(
+                    valor, key, keysNotNullComplemetares)))
             sql = f"INSERT INTO tb_pessoadadoscomplementares ({', '.join(campo)}) values ({
                 ', '.join(valores)})"
 
@@ -76,11 +79,14 @@ def atualizarPessoaDadosComplementar():
 
 
 def formatarValor(valor):
-    if not valor or str(valor).strip() == 'nan':
+    if not valor or str(valor).strip() == 'nan' or str(valor).strip() == 'NaT':
         return ''
 
-    if str(valor).isdigit() or type(valor) in [int, float]:
+    if str(valor).isdigit() or type(valor) in [int, float, numpy.int64, numpy.float64]:
         return int(valor)
+
+    if type(valor) is datetime.datetime:
+        return f"'{valor.strftime('%Y-%m-%d %H:%M:%S')}'"
 
     if type(valor) is str:
         return valor.strip().replace("'", "").upper()
@@ -88,9 +94,9 @@ def formatarValor(valor):
     return valor
 
 
-def formatarDadoBanco(dado, key="", keysNotNull=keysNotNullComplemetares):
+def formatarDadoBanco(dado, key="", keysNotNull=[]):
     dado = formatarValor(dado)
-    if not dado or str(dado).strip() == 'nan':
+    if not dado or str(dado).strip() == 'nan' or str(dado).strip() == 'NaT':
         return 'null' if key not in keysNotNull else "''"
 
     if not type(dado) is str:
@@ -111,7 +117,7 @@ def filtrarDadosBanco(dadosBanco, id_usuario, key='id_usuario'):
     return []
 
 
-def atualizarPoloCensso():
+def atualizarPoloCenso():
     conn = init_connection()
     tabela = pd.read_excel('consulta/CensoPolo.xlsx')
 
@@ -233,3 +239,33 @@ def atualizarPessoa():
     conn.close()
     pd.DataFrame(add).to_excel(
         "retorno/atualizarPessoa.xlsx")
+
+
+def atualizarFormaIngresso():
+    conn = init_connection()
+    tabela = pd.read_excel('consulta/CensoProdFormaIngresso.xlsx')
+    ids = []
+    for index, row in tabela.iterrows():
+        ids.append(str(row['id_matricula']))
+    add = []
+    for index, row in tabela.iterrows():
+
+        sql = ''
+        id_matricula = formatarDadoBanco(
+            row['id_matricula'], 'id_matricula')
+        id_tiposelecao = formatarDadoBanco(
+            row['id_tiposelecao'], 'id_tiposelecao')
+
+        sql = f"UPDATE tb_vendaproduto SET id_tiposelecao = {id_tiposelecao} WHERE id_matricula = {id_matricula}"
+        print(index, "id_matricula", id_matricula, 'sql', sql)
+
+        cursor = run_execute(conn=conn, query=sql)
+        print(index, "rowcount", cursor.rowcount, sql)
+        add.append({"id_usuario": id_matricula,
+                   "rowcount": cursor.rowcount, "sql": sql})
+
+        print("", end="\n\n")
+    conn.commit()
+    conn.close()
+    pd.DataFrame(add).to_excel(
+        "retorno/atualizarFormaIngresso.xlsx")
