@@ -20,7 +20,8 @@ def inicio():
         '2': {'title': 'Atualizar Pessoa dados Complemtar', 'function': atualizarPessoaDadosComplementar},
         '3': {'title': 'Atualizar Polo Censo', 'function': atualizarPoloCenso},
         '4': {'title': 'Atualizar Pessoa Censo', 'function': atualizarPessoa},
-        '5': {'title': 'Atualizar Forma de Ingresso', 'function': atualizarFormaIngresso}
+        '5': {'title': 'Atualizar Forma de Ingresso', 'function': atualizarFormaIngresso},
+        '6': {'title': 'Atualizar Deficiencia', 'function': atualizarDeficiencia}
     }
 
     menuTelas(MENU)
@@ -269,3 +270,39 @@ def atualizarFormaIngresso():
     conn.close()
     pd.DataFrame(add).to_excel(
         "retorno/atualizarFormaIngresso.xlsx")
+
+
+def atualizarDeficiencia():
+    conn = init_connection()
+    tabela = pd.read_excel('consulta/CensoDeficiencia.xlsx')
+    ids = []
+    for index, row in tabela.iterrows():
+        ids.append(str(row['id_usuario']))
+
+    cursor = run_execute(
+        conn=conn,
+        query=f"DELETE FROM tb_usuariodeficiencia WHERE id_usuario in ({','.join(ids)})")
+
+    print(f"DELETE tb_usuariodeficiencia: {cursor.rowcount}")
+
+    add = []
+    for index, row in tabela.iterrows():
+        sql = ''
+        id_usuario = formatarDadoBanco(
+            row['id_usuario'], 'id_usuario')
+        id_deficiencia = formatarDadoBanco(
+            row['id_deficiencia'], 'id_deficiencia')
+
+        if id_deficiencia and id_deficiencia != 'null':
+            sql = f"INSERT INTO tb_usuariodeficiencia (id_usuario, id_deficiencia) values ({id_usuario}, {id_deficiencia})"
+            print(index, "id_usuario", id_usuario, 'sql', sql)
+            cursor = run_execute(conn=conn, query=sql)
+            print(index, "rowcount", cursor.rowcount)
+            add.append({"id_usuario": id_usuario,
+                        "rowcount": cursor.rowcount, "sql": sql})
+            print("", end="\n\n")
+
+    conn.commit()
+    conn.close()
+    pd.DataFrame(add).to_excel(
+        "retorno/atualizarDeficiencia.xlsx")
