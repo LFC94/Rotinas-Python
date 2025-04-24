@@ -122,35 +122,27 @@ def atualizarPoloCenso():
     conn = init_connection()
     tabela = pd.read_excel('consulta/CensoPolo.xlsx')
 
+    ids = []
     for index, row in tabela.iterrows():
-        update = []
+        ids.append(str(row['id_polo']))
+    cursor = run_execute(
+        conn=conn,
+        query=f"DELETE FROM tb_censopolo WHERE id_polo in ({','.join(ids)})")
+
+    print(f"DELETE tb_censopolo: {cursor.rowcount}")
+
+    for index, row in tabela.iterrows():
         sql = ''
         id_polo = row['id_polo']
-        id_censopolo = row['id_censopolo']
-        nu_codigopolo = row['nu_codigopolo']
-        nu_polo = formatarDadoBanco(row['nu_polo'], 'nu_codigopolo')
-        print(index)
+        nu_codigopolo = formatarDadoBanco(
+            row['nu_codigopolo'], 'nu_codigopolo')
 
-        if (not id_censopolo or str(id_censopolo).strip() == 'nan') and nu_polo and nu_polo != 'null':
-            sql = f"INSERT INTO tb_censopolo (dt_cadastro, bl_ativo, id_entidade, id_censoinstituicao, nu_codigopolo, id_polo) values (getdate(), 1, 352, 1, {
-                nu_polo}, {formatarDadoBanco(id_polo, 'id_polo')})"
+        sql = f"INSERT INTO tb_censopolo (dt_cadastro, bl_ativo, id_entidade, id_censoinstituicao, nu_codigopolo, id_polo) values (getdate(), 1, 352, 1, {
+            nu_codigopolo}, {formatarDadoBanco(id_polo, 'id_polo')})"
 
-        if id_censopolo and str(id_censopolo).strip() != 'nan':
-            sql = "UPDATE tb_censopolo SET"
-            if nu_polo and nu_polo != 'null':
-                sql = f"{sql} nu_codigopolo = {nu_polo}, bl_ativo=1 "
-            else:
-                sql = f"{sql} bl_ativo=0"
-
-            sql = f"{sql} where id_censopolo = {
-                formatarDadoBanco(id_censopolo, 'id_censopolo')}"
-
-        if sql:
-            print(index, "update: ", len(update) >
-                  0, sql, nu_polo, nu_codigopolo)
-            run_execute(conn=conn, query=sql)
-
-        print("", end="\n\n")
+        print(index, sql, nu_codigopolo, nu_codigopolo)
+        cursor = run_execute(conn=conn, query=sql)
+        print(index, "rowcount", cursor.rowcount, end="\n\n")
 
     conn.commit()
     conn.close()
