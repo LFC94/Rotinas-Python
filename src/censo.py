@@ -137,12 +137,15 @@ def atualizarPoloCenso():
         nu_codigopolo = formatarDadoBanco(
             row['nu_codigopolo'], 'nu_codigopolo')
 
+        if not nu_codigopolo or str(nu_codigopolo).strip() == 'null':
+            continue
+
         sql = f"INSERT INTO tb_censopolo (dt_cadastro, bl_ativo, id_entidade, id_censoinstituicao, nu_codigopolo, id_polo) values (getdate(), 1, 352, 1, {
             nu_codigopolo}, {formatarDadoBanco(id_polo, 'id_polo')})"
 
-        print(index, sql, nu_codigopolo, nu_codigopolo)
+        print(index, 'nu_codigopolo', nu_codigopolo, 'sql', sql)
         cursor = run_execute(conn=conn, query=sql)
-        print(index, "rowcount", cursor.rowcount, end="\n\n")
+        print(index, 'rowcount', cursor.rowcount, end="\n\n")
 
     conn.commit()
     conn.close()
