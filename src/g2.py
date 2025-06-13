@@ -5,6 +5,7 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
+from src.util.conecta import init_connection, run_execute, run_query
 from src.util.uteis import menuTelas
 
 
@@ -103,10 +104,24 @@ def roboGeral():
         #         f"\n\n Rodou:{count} : {text.replace("<br/>", "\n")}")
 
 
+def scripts():
+    conn = init_connection()
+    tabela = pd.read_excel('consulta/query.xlsx')
+    totalLinhas = 0
+    for index, sql in enumerate(tabela['query']):
+        print(index)
+        cursor = run_execute(conn=conn, query=sql)
+        totalLinhas += cursor.rowcount
+        print(index, f"resultado {cursor.rowcount}")
+    
+    print(f"tatal {totalLinhas}")
+
 def inicio():
     MENU = {
         '1': {'title': 'Encerrar Alunos Sala Perene', 'function': roboEncerrarAlunosSalaPerene},
         '2': {'title': 'Robo Geral', 'function': roboGeral},
-        '3': {'title': 'Robo Lista', 'function': roboLista}}
+        '3': {'title': 'Robo Lista', 'function': roboLista},
+        '4': {'title': 'Robo Script', 'function': scripts}
+        }
 
     menuTelas(MENU)
