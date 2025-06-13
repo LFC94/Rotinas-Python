@@ -80,19 +80,19 @@ def atualizarPessoaDadosComplementar():
 
 
 def formatarValor(valor):
-    if not valor or str(valor).strip() == 'nan' or str(valor).strip() == 'NaT':
+    if valor is None or str(valor).strip().lower() in ('nan', 'nat', 'none', ''):
         return ''
 
-    if str(valor).isdigit() or type(valor) in [int, float, numpy.int64, numpy.float64]:
-        return int(valor)
+    if isinstance(valor, (int, float, numpy.int64, numpy.float64)):
+        return f"{int(valor)}"
 
-    if type(valor) is datetime.datetime:
-        return f"'{valor.strftime('%Y-%m-%d %H:%M:%S')}'"
+    if isinstance(valor, (datetime.datetime, datetime.date, pd.Timestamp)):
+        return f"{valor.strftime('%Y-%m-%d')}"
 
-    if type(valor) is str:
-        return valor.strip().replace("'", "").upper()
+    if isinstance(valor, str):
+        return f"{valor.strip().replace("'", "").upper()}"
 
-    return valor
+    return f"{valor}"
 
 
 def formatarDadoBanco(dado, key="", keysNotNull=[]):
@@ -153,10 +153,12 @@ def atualizarPoloCenso():
 
 def diferencaCensoAnteriorAtua():
 
+    w = ' cm.id_matricula in (371748, 400073, 424466, 424528, 445542, 445878, 445906, 448134, 448170, 469647, 480857, 497267, 514328, 530257, 564064, 564453, 583085, 584242, 590033, 595832, 634011, 635704, 636959, 637082, 638902, 640208, 643663, 643931, 649860, 650355, 653664, 655570, 655607, 656223, 657506, 659596, 664061, 680237, 896104, 970470, 991097, 1017019, 1042779, 1069503, 1089729, 1098099, 1108265, 1128772, 1142706, 1149808, 1150428, 1172680, 1174436, 1176401, 1178736, 1184398, 1185664, 1187108, 1199383, 1214091, 1237952, 1250835, 1261503, 1268979, 1299129, 1304556, 1307384, 1329825, 1349915)'
+
     conn = init_connection()
     censoAnterior = run_query(
         conn=conn,
-        query=f"SELECT * FROM tb_censo_anterior")
+        query=f"SELECT ca.* FROM tb_censo_anterior ca join tb_censomatricula cm on ca.id_matricula = cm.id_matricula where {w} ")
     print(f"censoAnterior: {len(censoAnterior)}")
     ids = []
     for row in censoAnterior:
