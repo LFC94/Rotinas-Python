@@ -86,3 +86,13 @@ def openFile():
     file_dialog = QFileDialog()
     return file_dialog.getOpenFileName(
         None, "Selecione um arquivo", "", "Arquivos de Excel (*.xlsx)")
+
+class MyLogger(object):
+    def debug(self, msg):
+        pass  # ignora debug
+
+    def warning(self, msg):
+        pass  # ignora warnings
+
+    def error(self, msg):
+        print(msg)  # mostra só erros
