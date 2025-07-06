@@ -59,10 +59,9 @@ def downloadMP3():
     script_dir = Path(__file__).resolve().parent
     ffmpeg_path = script_dir.parent / "external" / "ffmpeg"
 
-    # input("\nURL Playlist=>")
-    playlist_url = "https://www.youtube.com/playlist?list=PLgtWjJM7TYq_RHjCoz8BET_A6SoYow6RZ"
+    playlist_url = input("🎵 Cole o link da playlist: ")
 
-    start_video_index = 31
+    start_video_index = 1
     ydl_opts = {
         'extract_flat': True,  # Extrai somente os links dos vídeos da playlist
         'quiet': True,
