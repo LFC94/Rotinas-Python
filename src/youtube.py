@@ -1,4 +1,3 @@
-import logging
 import os
 from pathlib import Path
 
@@ -42,23 +41,36 @@ def mostrar_progresso(d):
         task_id = task_mapping.get(video_id)
         if task_id or task_id == 0:
             progress_bar.remove_task(task_id)
-        else:
-            print(f"nao localizado {video_id}", task_mapping)
         task_mapping.pop(video_id, None)
-        print(f"✅ Finalizado: {d.get('filename')}")
+        print(f"✅ Download Finalizado: {d.get('filename')}")
+    else:
+        print(f"🚩 status: {status}")
+
+
+def conversao_hook(d):
+    status = d['status']
+    postprocessor = d['postprocessor']
+    info = d.get('info_dict', {})
+    video_title = info.get('title')
+    video_filepath = info.get('filepath')
+    if status == 'started':
+        print(f"🎧 {postprocessor}: {video_title}")
+    elif status == 'finished':
+        print(f"✅ {postprocessor} finalizada: {video_filepath}")
+
+# https://www.youtube.com/playlist?list=PL3oW2tjiIxvStcP4RCwKOGkXP7Toccnj2
 
 
 def downloadMP3():
 
     download_directory = Path.home() / "Downloads/playlist"
-    cookies_path = Path.home() / "Downloads/cookies.txt"
 
     if not os.path.exists(download_directory):
         os.makedirs(download_directory)
 
     script_dir = Path(__file__).resolve().parent
     ffmpeg_path = script_dir.parent / "external" / "ffmpeg"
-
+    cookies_path = script_dir.parent / "external" / "cookies.txt"
     playlist_url = input("🎵 Cole o link da playlist: ")
 
     start_video_index = 1
@@ -94,7 +106,8 @@ def downloadMP3():
             'quiet': True,
             'verbose': False,
             'logger': MyLogger(),
-            'progress_hooks': [mostrar_progresso]
+            'progress_hooks': [mostrar_progresso],
+            'postprocessor_hooks': [conversao_hook]
         }
 
         with progress_bar:
@@ -102,7 +115,7 @@ def downloadMP3():
                 for video_url in video_urls:
                     count_download += 1
                     try:
-                        print(f"🎵 {count_download}/{count_video} Baixando")
+                        print(f"\n🎵 {count_download}/{count_video} Baixando")
                         ydl.download([video_url])
                     except Exception as e:
                         print(f"⚠️ Erro ao baixar {video_url}: {e}")

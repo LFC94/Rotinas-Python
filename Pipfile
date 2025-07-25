@@ -9,14 +9,14 @@ bs4 = "*"
 requests = "*"
 pandas = "*"
 openpyxl = "*"
-youtube-dl = "*"
-yt-dlp = "*"
 inquirerpy = "*"
 python-dotenv = "*"
 pyside6 = "*"
 rich="*"
+yt-dlp = "*"
 
 [dev-packages]
+dotenv = "*"
 
 [requires]
 python_version = "3.12"

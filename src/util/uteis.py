@@ -2,6 +2,8 @@ import json
 import os
 import re
 import sys
+from datetime import datetime
+from pathlib import Path
 
 from InquirerPy import prompt
 from InquirerPy.base.control import Choice
@@ -87,6 +89,7 @@ def openFile():
     return file_dialog.getOpenFileName(
         None, "Selecione um arquivo", "", "Arquivos de Excel (*.xlsx)")
 
+
 class MyLogger(object):
     def debug(self, msg):
         pass  # ignora debug
@@ -96,3 +99,20 @@ class MyLogger(object):
 
     def error(self, msg):
         print(msg)  # mostra só erros
+
+
+def salvar_em_json(d, nome_base="yt_dlp_event"):
+    export_dir = Path("logs")  # pasta onde salvar
+    export_dir.mkdir(exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    nome_arquivo = f"{nome_base}_{d.get('status')}_{timestamp}.json"
+    caminho = export_dir / nome_arquivo
+
+    # Tenta converter para JSON e salvar
+    try:
+        with open(caminho, "w", encoding="utf-8") as f:
+            json.dump(d, f, indent=4, ensure_ascii=False)
+        print(f"📄 Evento salvo em: {caminho}")
+    except Exception as e:
+        print(f"⚠️ Erro ao salvar JSON: {e}")
