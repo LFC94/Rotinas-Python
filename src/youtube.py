@@ -99,6 +99,11 @@ def downloadMP3():
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }],
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["android", "web"]
+                }
+            },
             'outtmpl':  str(download_directory / '%(title)s.%(ext)s'),
             'noplaylist': False,
             'ffmpeg_location': str(ffmpeg_path),
