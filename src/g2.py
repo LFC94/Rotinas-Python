@@ -1,5 +1,9 @@
 
 import os
+import platform
+import subprocess
+from datetime import datetime, timedelta
+from io import StringIO
 
 import pandas as pd
 import requests
@@ -113,15 +117,87 @@ def scripts():
         cursor = run_execute(conn=conn, query=sql)
         totalLinhas += cursor.rowcount
         print(index, f"resultado {cursor.rowcount}")
-    
+
     print(f"tatal {totalLinhas}")
+
+
+def buscar_assesou_como():
+    # Converte as strings para datas
+    inicio = input("\nInforme o periodo inicial (Y-m-d): ")
+    data_inicio = datetime.strptime(inicio, "%Y-%m-%d")
+    fim = input("\nInforme o periodo final (Y-m-d): ")
+    data_fim = datetime.strptime(fim, "%Y-%m-%d") if fim else data_inicio
+    palavra_chave = input("\nInforme o nome procurado: ")
+
+    # Lista para armazenar resultados
+    resultados = []
+    url_base = "https://g2s.unyleya.com.br/tmp/como_acessou_{data}.csv"
+    nome_saida = 'retorno/acessou_como.csv'
+
+    # Loop por todas as datas no intervalo
+    data_atual = data_inicio
+    while data_atual <= data_fim:
+        data_formatada = data_atual.strftime("%Y%m%d")
+        url = url_base.replace("{data}", data_formatada)
+
+        try:
+            print(f"🔄 Baixando: {url}")
+            response = requests.get(url)
+            response.raise_for_status()
+
+            df = pd.read_csv(StringIO(response.text),
+                             sep=';', on_bad_lines='skip')
+            if 'Login/E-mail' in df.columns:
+                filtrado = df[df['Login/E-mail'].str.contains(
+                    palavra_chave, case=False, na=False)].copy()
+
+                if not filtrado.empty:
+                    filtrado['data_csv'] = data_formatada
+                    resultados.append(filtrado)
+            else:
+                print(
+                    f"⚠️ Coluna 'Login/E-mail' não encontrada em {data_formatada}")
+
+        except requests.RequestException as e:
+            print(f"❌ Erro ao baixar {url}: {e}")
+        except Exception as e:
+            print(f"❌ Erro ao processar {url}: {e}")
+
+        data_atual += timedelta(days=1)
+
+    if resultados:
+        df_resultado = pd.concat(resultados, ignore_index=True)
+
+        # Garante que a pasta existe
+        os.makedirs(os.path.dirname(nome_saida), exist_ok=True)
+
+        df_resultado.to_csv(nome_saida, index=False)
+        print(f"\n✅ Resultado salvo em: {nome_saida}")
+
+        # Tenta abrir automaticamente o arquivo
+        sistema = platform.system()
+        try:
+            if sistema == 'Windows':
+                os.startfile(os.path.abspath(nome_saida))
+            elif sistema == 'Darwin':  # macOS
+                subprocess.run(['open', nome_saida])
+            elif sistema == 'Linux':
+                subprocess.run(['xdg-open', nome_saida])
+            else:
+                print(f"⚠️ Sistema operacional não suportado: {sistema}")
+        except Exception as e:
+            print(f"❌ Não foi possível abrir o arquivo automaticamente: {e}")
+    else:
+        print("\n⚠️ Nenhuma linha encontrada contendo a palavra na coluna 'Login/E-mail'.")
+
 
 def inicio():
     MENU = {
         '1': {'title': 'Encerrar Alunos Sala Perene', 'function': roboEncerrarAlunosSalaPerene},
         '2': {'title': 'Robo Geral', 'function': roboGeral},
         '3': {'title': 'Robo Lista', 'function': roboLista},
-        '4': {'title': 'Robo Script', 'function': scripts}
-        }
+        '4': {'title': 'Robo Script', 'function': scripts},
+        '5': {'title': 'Acessou como', 'function': buscar_assesou_como}
+    }
 
     menuTelas(MENU)
