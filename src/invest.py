@@ -1183,60 +1183,58 @@ def listar_acoes_brasileiras():
     print("\nDados salvos em 'retorno/dados_acoes.csv'")
 
 
-# def inicio():
-#     MENU = {'1': {'title': 'listar Acoes brasileiras',
-#                   'function': listar_acoes_brasileiras}}
+def inicio():
+    MENU = {'1': {'title': 'listar Acoes brasileiras',
+                  'function': listar_acoes_brasileiras}}
 
-#     menuTelas(MENU)
-
-
-# Ler e mesclar
-# Ler e mesclar
-# Ler e mesclar
-df1 = pd.read_excel('C:/Users/lucas/Downloads/Pasta1.xlsx')
-df2 = pd.read_excel('C:/Users/lucas/Downloads/Pasta2.xlsx')
-
-merged = pd.merge(df1, df2, on='Ticker', how='outer', suffixes=('_1', '_2'))
-
-for col in ['Nome', 'Setor', 'Segmento', 'País']:
-    merged[col] = np.where(
-        (merged[f'{col}_1'].notna() & (merged[f'{col}_1'] != '')),
-        merged[f'{col}_1'],
-        merged[f'{col}_2']
-    )
-
-# Criar uma cópia explícita para evitar o warning
-resultado = merged[['Ticker', 'Nome', 'Setor', 'Segmento', 'País']].copy()
-
-# Traduzir apenas valores únicos
-translator = GoogleTranslator(source='auto', target='pt')
+    menuTelas(MENU)
 
 
-def traduzir_valores_unicos(coluna):
-    valores_unicos = resultado[coluna].dropna().unique()
-    traducao_dict = {}
+def mesclar():
+    df1 = pd.read_excel('C:/Users/lucas/Downloads/Pasta1.xlsx')
+    df2 = pd.read_excel('C:/Users/lucas/Downloads/Pasta2.xlsx')
 
-    for valor in valores_unicos:
-        try:
-            if valor != '':
-                traducao_dict[valor] = translator.translate(str(valor))
-            else:
+    merged = pd.merge(df1, df2, on='Ticker',
+                      how='outer', suffixes=('_1', '_2'))
+
+    for col in ['Nome', 'Setor', 'Segmento', 'País']:
+        merged[col] = np.where(
+            (merged[f'{col}_1'].notna() & (merged[f'{col}_1'] != '')),
+            merged[f'{col}_1'],
+            merged[f'{col}_2']
+        )
+
+    # Criar uma cópia explícita para evitar o warning
+    resultado = merged[['Ticker', 'Nome', 'Setor', 'Segmento', 'País']].copy()
+
+    # Traduzir apenas valores únicos
+    translator = GoogleTranslator(source='auto', target='pt')
+
+    def traduzir_valores_unicos(coluna):
+        valores_unicos = resultado[coluna].dropna().unique()
+        traducao_dict = {}
+
+        for valor in valores_unicos:
+            try:
+                if valor != '':
+                    traducao_dict[valor] = translator.translate(str(valor))
+                else:
+                    traducao_dict[valor] = valor
+            except Exception as e:
+                print(f"Erro ao traduzir '{valor}': {e}")
                 traducao_dict[valor] = valor
-        except Exception as e:
-            print(f"Erro ao traduzir '{valor}': {e}")
-            traducao_dict[valor] = valor
 
-    return traducao_dict
+        return traducao_dict
 
+    # Usar .loc para atribuir valores
+    traducao_setor = traduzir_valores_unicos('Setor')
+    resultado.loc[:, 'Setor'] = resultado['Setor'].map(
+        lambda x: traducao_setor.get(x, x))
 
-# Usar .loc para atribuir valores
-traducao_setor = traduzir_valores_unicos('Setor')
-resultado.loc[:, 'Setor'] = resultado['Setor'].map(
-    lambda x: traducao_setor.get(x, x))
+    traducao_segmento = traduzir_valores_unicos('Segmento')
+    resultado.loc[:, 'Segmento'] = resultado['Segmento'].map(
+        lambda x: traducao_segmento.get(x, x))
 
-traducao_segmento = traduzir_valores_unicos('Segmento')
-resultado.loc[:, 'Segmento'] = resultado['Segmento'].map(
-    lambda x: traducao_segmento.get(x, x))
-
-# Salvar
-resultado.to_excel('C:/Users/lucas/Downloads/planilha_final.xlsx', index=False)
+    # Salvar
+    resultado.to_excel(
+        'C:/Users/lucas/Downloads/planilha_final.xlsx', index=False)
