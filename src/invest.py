@@ -5,6 +5,8 @@ import pandas as pd
 import yfinance as yf
 from deep_translator import GoogleTranslator
 
+from src.util.uteis import menuTelas
+
 # from src.util.uteis import menuTelas
 
 
