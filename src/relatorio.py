@@ -1,129 +1,133 @@
 
+import os
+from datetime import datetime
 
 import pandas as pd
 
-from src.util.uteis import formatCPF, menuTelas, openFile
+from src.util.conecta import init_connection, run_query
+from src.util.uteis import menuTelas
 
 
 def inicio():
     menu = {
-        '1': {'title': 'RELATORIO ENADE', 'function': enade},
-        '2': {'title': 'RELATORIO Renovação', 'function': mediaRenovaca},
+        '1': {'title': 'Compara Consultas', 'function': comparar_consulta},
     }
     menuTelas(menu)
 
 
-def enade():
-    print('Processando ...', end="")
-    tabela = pd.read_excel('consulta/consultaenade.xlsx')
-    json_file = {}
-    for index, row in tabela.iterrows():
-        print('.' if index % 2 == 0 else '', end="")
-        id_matricula = f"{row.get('id_matricula')}"
-        doc = json_file[id_matricula] if id_matricula in json_file else {}
-        if id_matricula not in json_file:
-            doc = {
-                'CPF': formatCPF(row.get('st_cpf')),
-                'Nome': row.get('st_nomecompleto'),
-                'Matricula': row.get('id_matricula'),
-                'Curso': row.get('st_projetopedagogico'),
-                'Evolução': row.get('st_evolucaograduacao'),
-                # 'Ano de Conclusão Ensino Médio': row.get('st_anoconclusaoensinomedio'),
-                'Polo': row.get('st_polo'),
-                'Polo Mec': row.get('st_polomec'),
-                'Polo Mec': row.get('st_codemec'),
-                # 'Email': row.get('st_email'),
-                # 'Telefone': row.get('st_telefone'),
-                # 'Carga Horária Total do Curso': row.get('st_cargahoraria'),
-                # 'Carga Horária Integralizada Pelo Aluno': row.get('st_cargahorariointegralizadapeloaluno'),
-                # 'Carga Horária Cursando': row.get('st_cargahorariacursando'),
-                # 'Carga Horária à Cursar': row.get('st_cargahorariaacursar'),
-                # 'Percentual De Conclusão': row.get('nu_percentualcargahorariaintegralizada'),
-                # 'Percentual Enade': row.get('nu_percentualenade'),
-                # 'Total Atividade Complementar': row.get('st_horasatividades'),
-                # 'Total Horas Aluno Atividade Complementar': row.get('st_cargahorariaatividadealuno'),
-                # 'Total De Horas Atividade complementar à Concluir': row.get('st_horasatividadefaltante'),
-                # 'Ano da Matricula': row.get('st_anoinicioturma'),
-                # 'Renovação': row.get('dt_renovacao'),
-                # 'TCC': '',
-                # 'TCC Status': '',
-                # 'TCC Abertura': '',
-                # 'TCC Encerramento': '',
-                'Estágio I': '',
-                'Estágio I Status': '',
-                'Estágio II': '',
-                'Estágio II Status': '',
-            }
+def compare(df_a, df_b, idx_a, idx_b):
+    print(f"🔛 {idx_a} com {idx_b} -> {datetime.now().strftime('%H%M%S')}")
+    # 1. Normaliza os DataFrames para garantir comparação correta
+    fullcolunm = [
+        chave
+        for obj in df_a
+        for chave in obj.keys()
+        if chave.startswith(("id_", "nu_"))
+    ]
 
-        disciplina = f"{row.get('st_disciplina')}"
-        if row.get('id_tipodisciplina') == 4:
-            if 'II' in disciplina:
-                doc['Estágio II'] = disciplina
-                doc['Estágio II Status'] = row.get('st_statusdisciplina')
-                doc['Estágio II Abertura'] = row.get('dt_abertura')
-                doc['Estágio II Encerramento'] = row.get('dt_encerramento')
-            else:
-                doc['Estágio I'] = disciplina
-                doc['Estágio I Status'] = row.get('st_statusdisciplina')
-                doc['Estágio I Abertura'] = row.get('dt_abertura')
-                doc['Estágio I Encerramento'] = row.get('dt_encerramento')
-        elif row.get('id_tipodisciplina') == 2:
-            doc['TCC'] = disciplina
-            doc['TCC Status'] = row.get('st_statusdisciplina')
-            doc['TCC Abertura'] = row.get('dt_abertura')
-            doc['TCC Encerramento'] = row.get('dt_encerramento')
-        elif row.get('id_tipodisciplina') == '':
-            doc[disciplina] = disciplina
+    def normalize_df(lista_de_objetos):
+        for obj in lista_de_objetos:
+            valorfull = []
+            for colun in fullcolunm:
+                valorfull.append(obj[colun])
+            obj['full'] = "_".join(map(str, valorfull))
+            obj['mat_ent'] = f"{obj['id_matricula']}_{obj['id_entidade']}_{obj['id_saladeaula']}"
+            obj['sal_ent'] = f"{obj['id_entidade']}_{obj['id_saladeaula']}"
 
-        json_file[id_matricula] = doc
+        return lista_de_objetos
 
-    print("\n Salvando .....")
-    pd.DataFrame(json_file.values()).to_excel("retorno/relatorioenade.xlsx")
+    grupo1 = normalize_df(df_a)
+    grupo2 = normalize_df(df_b)
+
+    # Conjuntos com os valores "concatenado"
+    mat_ent1 = set(obj['mat_ent'] for obj in grupo1)
+    sal_ent1 = set(obj['sal_ent'] for obj in grupo1)
+    full1 = set(obj['full'] for obj in grupo1)
+    mat_ent2 = set(obj['mat_ent'] for obj in grupo2)
+    sal_ent2 = set(obj['sal_ent'] for obj in grupo2)
+    full2 = set(obj['full'] for obj in grupo2)
+
+    # Diferenças
+    retgrupo1 = []
+    for obj in grupo1:
+        obj[f'bl_mat_ent_{idx_b}'] = obj['mat_ent'] in mat_ent2
+        obj[f'bl_sal_ent_{idx_b}'] = obj['sal_ent'] in sal_ent2
+        obj[f'bl_full_{idx_b}'] = obj['full'] in full2
+        retgrupo1.append(obj)
+
+    retgrupo2 = []
+    for obj in grupo2:
+        obj[f'bl_mat_ent{idx_a}'] = obj['mat_ent'] in mat_ent1
+        obj[f'bl_sal_ent{idx_a}'] = obj['sal_ent'] in sal_ent1
+        obj[f'bl_full_{idx_a}'] = obj['full'] in full1
+        retgrupo2.append(obj)
+
+    return retgrupo1, retgrupo2
 
 
-def mediaRenovaca():
+def save(dados, name, output_dir='C:/tmp/retorno'):
+    print(f"💾 {name} -> {datetime.now().strftime('%M%S')}")
+    os.makedirs(output_dir, exist_ok=True)
 
-    # file_path, _ = openFile()
-    # print(file_path)
-    xls = pd.ExcelFile("C:/Users/dev/Downloads/ofer.xlsx")
-    df = xls.parse('sheet1')  # Ajuste o nome da aba conforme necessário
+    pd.DataFrame(dados).to_excel(os.path.join(
+        output_dir, f'df_{name}.xlsx'), index=False)
 
-    # Contar o número de id_venda únicos
-    num_id_venda_unico = df["id_venda"].nunique()
 
-    # Calcular a média de id_venda repetidos
-    total_vendas = df["id_venda"].count()
-    media_id_venda_repetido = total_vendas / num_id_venda_unico
+def load_queries_from_files(query_files):
+    queries = {}
+    for file in query_files:
+        if os.path.exists(file):
+            with open(file, 'r') as f:
+                query = f.read().strip()
+                basename_with_extension = os.path.basename(file)
+                filename_without_extension, _ = os.path.splitext(
+                    basename_with_extension)
+                queries[filename_without_extension] = query
+        else:
+            print(f"Arquivo {file} não encontrado.")
+    return queries
 
-    # Calcular o percentual de "id_prematriculadisciplina" sendo vazio
-    percentual_id_prematricula_vazio = df["id_prematriculadisciplina"].isna(
-    ).mean() * 100
 
-    # Converter a coluna de data para datetime
-    df["dt_confirmacao"] = pd.to_datetime(df["dt_confirmacao"])
+def busca(pool, value, key):
+    print(f"🕵️‍♀️ {key} -> {datetime.now().strftime('%H%M%S')}")
+    return run_query(pool, value)
 
-    # Criar a coluna de ano/mês
-    df["ano_mes"] = df["dt_confirmacao"].dt.to_period("M")
 
-    # Calcular a média de id_venda única por mês/ano
-    media_id_venda_unica_por_mes = df.groupby(
-        "ano_mes")["id_venda"].nunique().mean()
+def comparar_consulta():
+    print(f"Inicio {datetime.now().strftime('%H%M%S')}")
 
-    # Contar o número de matrículas únicas
-    num_matriculas_unicas = df["id_matricula"].nunique()
+    query_files = [
+        'consulta/consulta1.sql',
+        'consulta/consulta2.sql',
+        'consulta/consulta3.sql',
+        'consulta/consulta4.sql',
+        'consulta/nova.sql',
+    ]
 
-    # Identificar o mês com mais vendas únicas
-    mes_mais_vendas = df.groupby("ano_mes")["id_venda"].nunique().idxmax()
+    queries = load_queries_from_files(query_files)
 
-    # Exibir os resultados
-    results = {
-        "Numero de id_venda unico": num_id_venda_unico,
-        "Media de id_venda repetido": media_id_venda_repetido,
-        "Percentual de id_prematriculadisciplina Vazio": percentual_id_prematricula_vazio,
-        "Media de id_venda unica por mes/ano": media_id_venda_unica_por_mes,
-        "Numero de matriculas unicas": num_matriculas_unicas,
-        "Mes com mais vendas unicas": str(mes_mais_vendas)
-    }
+    if not queries:
+        print("Nenhuma consulta foi carregada. Verifique os arquivos de consulta.")
+        return
 
-    for key, item in results.items():
-        print(f"{key}: {item}")
+    pool = init_connection()
+    querys = {key: busca(pool, value, key) for key, value in queries.items()}
+    results = []
+    keys = []
+    for key, value in querys.items():
+        results.append(value)
+        keys.append(key)
+
+    # Comparações em pares
+    for i in range(len(results)):
+        for j in range(i + 1, len(results)):
+            results[i], results[j] = compare(
+                results[i], results[j], keys[i], keys[j])
+
+    datetime_string = datetime.now().strftime("%M%S")
+
+    for i in range(len(results)):
+        save(results[i], f"{keys[i]}_{datetime_string}")
+
+    pool.close()
+    exit()
