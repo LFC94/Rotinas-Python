@@ -5,7 +5,8 @@ from datetime import datetime
 import pandas as pd
 
 from src.util.conecta import init_connection, run_query
-from src.util.uteis import limpar_cpf, menuTelas, openFile, salvar_em_xlsx
+from src.util.uteis import (limpar_caracteres_especiais, limpar_cpf, menuTelas,
+                            openFile, salvar_em_xlsx)
 
 
 def inicio():
@@ -116,7 +117,33 @@ def comparar_consulta():
     datetime_string = datetime.now().strftime("%M%S")
 
     for i in range(len(results)):
-        salvar_em_xlsx(results[i], f"{keys[i]}_{datetime_string}")
+        salvar_em_xlsx(results[i], f"df_{keys[i]}_{datetime_string}")
 
     pool.close()
     exit()
+
+
+def buscaAlunosLote():
+    caminho_arquivo, _ = openFile()
+    if (not caminho_arquivo):
+        return
+
+    abas = pd.read_excel(caminho_arquivo, sheet_name=None, dtype=str)
+
+    resultado = {}
+
+    for nome_aba, df in abas.items():
+        colunas_norm = {limpar_caracteres_especiais(col.lower().replace(
+            " ", "")): col for col in df.columns}
+        if "cpf" in colunas_norm:
+            coluna_cpf = colunas_norm["cpf"]
+
+            cpfs = df[coluna_cpf].map(limpar_cpf).dropna().tolist()
+
+            resultado[nome_aba] = cpfs
+
+    conn = init_connection()
+    for aba, cpf in resultado.items():
+        query = f"SELECT DISTINCT st_cpf 'st_cpf', dt_nascimento 'dt_nascimento', st_nomecompleto 'st_nomecompleto', st_sexo 'st_sexo', st_nomemae 'st_nomemae', st_nomepai 'st_nomepai', st_rg 'st_rg', st_orgaoexpeditor 'st_orgaoexpeditor', dt_dataexpedicao 'dt_dataexpedicao', st_cep 'st_cep', st_endereco 'st_endereco', nu_numero 'nu_numero', st_bairro 'st_bairro', st_complemento 'st_complemento', sg_uf 'sg_uf', st_nomemunicipio 'st_municipio', 55 'nu_ddi_residencial', p.nu_ddd 'nu_ddd_residencial', nu_telefone 'nu_telefone_residencial', 55 'nu_ddi_celular', p.nu_ddd 'nu_ddd_celular', nu_telefonealternativo 'nu_telefone_celular', st_email 'st_email' FROM vw_pessoa p WHERE id_entidade = 352 and st_cpf in ('{"', '".join(cpf)}')"
+        dados = run_query(conn=conn, query=query, key=aba)
+        salvar_em_xlsx(dados=dados, name=aba)

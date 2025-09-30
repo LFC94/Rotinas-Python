@@ -5,7 +5,7 @@ import pyodbc
 
 
 def init_connection():
-    print(f"🔄️ Conectando.... -> {datetime.now().strftime('%H%M%S')}")
+    print(f"🔄️ Conectando.... as {datetime.now().strftime('%H%M%S')}")
     return pyodbc.connect(
         "DRIVER={SQL Server};"
         + f"SERVER={os.getenv("SERVER_DB")};"
@@ -16,7 +16,7 @@ def init_connection():
 
 
 def run_query(conn, query, *params, key=''):
-    print(f"🕵️‍♀️ Buscando {key}.... -> {datetime.now().strftime('%H%M%S')}")
+    print(f"🕵️‍♀️ Buscando {key} .... as {datetime.now().strftime('%H%M%S')}")
     with conn.cursor() as cursor:
         cursor.execute(query, params)
         columns = [column[0] for column in cursor.description]

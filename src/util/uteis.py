@@ -67,6 +67,15 @@ def limpar_cpf(valor):
     return cpf_str if cpf_str else None
 
 
+def limpar_caracteres_especiais(nome_aba):
+    """
+    Remove caracteres especiais do nome da aba, mantendo apenas letras, números e '_'.
+    """
+    # Substitui qualquer caractere que não seja letra, número ou underscore por '_'
+    nome_limpo = re.sub(r"[^\w]", "_", nome_aba)
+    return nome_limpo
+
+
 def extract_between(text, start, end='', endForm=''):
     if len(text) > 500:
         text = text[:500]
@@ -129,8 +138,8 @@ def salvar_em_json(d, nome_base="yt_dlp_event"):
 
 
 def salvar_em_xlsx(dados, name, output_dir='C:/tmp/retorno'):
-    print(f"💾 {name} -> {datetime.now().strftime('%M%S')}")
+    print(f"💾 {name} -> ({len(dados)}) as {datetime.now().strftime('%H%M%S')}")
     os.makedirs(output_dir, exist_ok=True)
 
     pd.DataFrame(dados).to_excel(os.path.join(
-        output_dir, f'df_{name}.xlsx'), index=False)
+        output_dir, f'{name}.xlsx'), index=False)
