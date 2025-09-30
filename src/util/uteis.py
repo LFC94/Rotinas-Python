@@ -5,6 +5,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+import pandas as pd
 from InquirerPy import prompt
 from InquirerPy.base.control import Choice
 from PySide6.QtWidgets import QApplication, QFileDialog
@@ -59,6 +60,13 @@ def formatCPF(cpf):
     return '{}.{}.{}-{}'.format(cpf[:3], cpf[3:6], cpf[6:9], cpf[9:])
 
 
+def limpar_cpf(valor):
+    if pd.isna(valor):
+        return None
+    cpf_str = re.sub(r"\D", "", str(valor))  # remove tudo que não é número
+    return cpf_str if cpf_str else None
+
+
 def extract_between(text, start, end='', endForm=''):
     if len(text) > 500:
         text = text[:500]
@@ -84,10 +92,12 @@ def extract_start(text, end):
 
 
 def openFile():
-    app = QApplication(sys.argv)
-    file_dialog = QFileDialog()
-    return file_dialog.getOpenFileName(
-        None, "Selecione um arquivo", "", "Arquivos de Excel (*.xlsx)")
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication([])
+
+    return QFileDialog().getOpenFileName(
+        None, "Selecione o arquivo Excel", "", "Planilhas Excel (*.xlsx *.xls)")
 
 
 class MyLogger(object):
@@ -116,3 +126,11 @@ def salvar_em_json(d, nome_base="yt_dlp_event"):
         print(f"📄 Evento salvo em: {caminho}")
     except Exception as e:
         print(f"⚠️ Erro ao salvar JSON: {e}")
+
+
+def salvar_em_xlsx(dados, name, output_dir='C:/tmp/retorno'):
+    print(f"💾 {name} -> {datetime.now().strftime('%M%S')}")
+    os.makedirs(output_dir, exist_ok=True)
+
+    pd.DataFrame(dados).to_excel(os.path.join(
+        output_dir, f'df_{name}.xlsx'), index=False)
