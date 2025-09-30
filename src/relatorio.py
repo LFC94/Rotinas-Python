@@ -5,12 +5,13 @@ from datetime import datetime
 import pandas as pd
 
 from src.util.conecta import init_connection, run_query
-from src.util.uteis import menuTelas
+from src.util.uteis import limpar_cpf, menuTelas, openFile, salvar_em_xlsx
 
 
 def inicio():
     menu = {
         '1': {'title': 'Compara Consultas', 'function': comparar_consulta},
+        '2': {'title': 'Busca Alunos Matricula Lote', 'function': buscaAlunosLote},
     }
     menuTelas(menu)
 
@@ -65,14 +66,6 @@ def compare(df_a, df_b, idx_a, idx_b):
     return retgrupo1, retgrupo2
 
 
-def save(dados, name, output_dir='C:/tmp/retorno'):
-    print(f"💾 {name} -> {datetime.now().strftime('%M%S')}")
-    os.makedirs(output_dir, exist_ok=True)
-
-    pd.DataFrame(dados).to_excel(os.path.join(
-        output_dir, f'df_{name}.xlsx'), index=False)
-
-
 def load_queries_from_files(query_files):
     queries = {}
     for file in query_files:
@@ -86,11 +79,6 @@ def load_queries_from_files(query_files):
         else:
             print(f"Arquivo {file} não encontrado.")
     return queries
-
-
-def busca(pool, value, key):
-    print(f"🕵️‍♀️ {key} -> {datetime.now().strftime('%H%M%S')}")
-    return run_query(pool, value)
 
 
 def comparar_consulta():
@@ -111,7 +99,8 @@ def comparar_consulta():
         return
 
     pool = init_connection()
-    querys = {key: busca(pool, value, key) for key, value in queries.items()}
+    querys = {key: run_query(pool, value, key=key)
+              for key, value in queries.items()}
     results = []
     keys = []
     for key, value in querys.items():
@@ -127,7 +116,7 @@ def comparar_consulta():
     datetime_string = datetime.now().strftime("%M%S")
 
     for i in range(len(results)):
-        save(results[i], f"{keys[i]}_{datetime_string}")
+        salvar_em_xlsx(results[i], f"{keys[i]}_{datetime_string}")
 
     pool.close()
     exit()
